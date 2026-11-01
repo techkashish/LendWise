@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LendWise - Modern Borrower Lending Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="/static/features.js"></script>
+<style>
+  :root {
+    --bg-page: #F5F7FF;
+    --sidebar-bg: #172554;
+    --sidebar-hover: #1e3a8a;
+    --sidebar-active: #2563eb;
+    --primary-blue: #4F46E5;
+    --primary-blue-hover: #4338CA;
+    --purple: #8175F5;
+    --purple-light: #EEF2FF;
+    --card-bg: #FFFFFF;
+    --text-main: #172554;
+    --text-secondary: #718096;
+    --border: #E5EAF5;
+    --border-light: #F1F4FA;
+    --success: #16A34A;
+    --success-bg: #DCFCE7;
+    --warning: #EA9A35;
+    --warning-bg: #FEF3C7;
+    --danger: #DC5555;
+    --danger-bg: #FEE2E2;
+    --shadow-sm: 0 1px 3px rgba(23, 37, 84, 0.04), 0 1px 2px rgba(23, 37, 84, 0.02);
+    --shadow-md: 0 4px 14px rgba(23, 37, 84, 0.06), 0 2px 4px rgba(23, 37, 84, 0.03);
+    --shadow-lg: 0 10px 25px -3px rgba(23, 37, 84, 0.08), 0 4px 6px -2px rgba(23, 37, 84, 0.03);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-main);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* SIDEBAR */
+  aside.sidebar {
+    width: 260px;
+    background: var(--sidebar-bg);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar-brand {
+    padding: 24px 22px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .brand-logo {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--purple), var(--primary-blue));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  }
+  .brand-text h1 {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1.1;
+  }
+  .brand-text span {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94A3B8;
+    font-weight: 600;
+  }
+
+  nav.sidebar-nav {
+    flex: 1;
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    color: #94A3B8;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    width: 100%;
+  }
+  .nav-item svg {
+    flex-shrink: 0;
+    transition: stroke 0.15s ease;
+  }
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+  }
+  .nav-item.on {
+    background: linear-gradient(90deg, rgba(79, 70, 229, 0.9), rgba(129, 117, 245, 0.8));
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  }
+  .nav-item.on svg {
+    stroke: #ffffff;
+  }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .privacy-badge {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 11.5px;
+    color: #CBD5E1;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.4;
+  }
+  .privacy-badge svg {
+    color: var(--purple);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* MAIN LAYOUT */
+  main.main-content {
+    margin-left: 260px;
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-page);
+  }
+
+  header.topbar {
+    height: 70px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 0 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-main);
+  }
+  .topbar-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .status-pill:hover { opacity: 0.85; }
+  .status-pill.connected {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid rgba(22, 163, 74, 0.2);
+  }
+  .status-pill.not-connected {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid rgba(234, 154, 53, 0.2);
+  }
+  .status-pill.badge-safe { background: var(--success-bg); color: var(--success); }
+  .status-pill.badge-watch { background: var(--warning-bg); color: var(--warning); }
+  .status-pill.badge-danger { background: var(--danger-bg); color: var(--danger); }
+
+  .content-container {
+    max-width: 1080px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 36px 60px;
+  }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.on { display: block; animation: fadeIn 0.2s ease-in-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* CARDS & TYPOGRAPHY */
+  .card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+  p.desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .muted {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  /* BUTTONS & INPUTS */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary-blue), #6366f1);
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-blue-hover), var(--primary-blue));
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: #FFFFFF;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-secondary:hover {
+    background: var(--bg-page);
+    border-color: #CBD5E1;
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-danger:hover {
+    background: #B91C1C;
+  }
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-blue);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #FFFFFF;
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(129, 117, 245, 0.15);
+  }
+  .financial-input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 8px 16px;
+  }
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    display: block;
+    margin: 12px 0 6px;
+  }
+
+  /* DASHBOARD STYLES */
+  .dash-header {
+    margin-bottom: 28px;
+  }
+  .dash-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .dash-header p {
+    font-size: 15px;
+    color: var(--text-secondary);
+  }
+
+  .health-card {
+    background: #FFFFFF;
+    border-radius: 18px;
+    padding: 28px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 32px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 28px 20px;
+  }
+  .empty-icon-wrap {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(79, 70, 229, 0.08);
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .empty-state h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .empty-state p {
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto 20px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .health-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 16px;
+  }
+  .badge-tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--primary-blue);
+    letter-spacing: 0.06em;
+  }
+
+  .health-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .metric-box {
+    background: var(--bg-page);
+    border-radius: 12px;
+    padding: 18px 16px;
+    border: 1px solid var(--border);
+  }
+  .metric-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .metric-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-main);
+    display: block;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .metric-val.blue { color: var(--primary-blue); }
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 4px;
+  }
+
+  .health-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* 4 FEATURE CARDS (MAX 2 COLUMNS, SPACIOUS) */
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    color: var(--text-main);
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .feature-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--purple);
+  }
+  .feature-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .feature-icon.blue { background: rgba(79, 70, 229, 0.1); color: var(--primary-blue); }
+  .feature-icon.purple { background: rgba(129, 117, 245, 0.12); color: var(--purple); }
+  .feature-icon.orange { background: rgba(234, 154, 53, 0.12); color: var(--warning); }
+  .feature-icon.green { background: rgba(22, 163, 74, 0.1); color: var(--success); }
+
+  .feature-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text-main);
+  }
+  .feature-card p {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .feature-cta {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: gap 0.2s;
+  }
+  .feature-card:hover .feature-cta { gap: 10px; }
+
+  /* BARS & METRIC HEROES */
+  .big {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--primary-blue);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin: 4px 0 10px;
+  }
+  .bar {
+    height: 10px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 12px 0 10px;
+  }
+  .bar > i {
+    display: block;
+    height: 100%;
+    background: var(--success);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin-top: 10px;
+  }
+  td {
+    padding: 10px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text-secondary); font-weight: 500; }
+  td:last-child { color: var(--text-main); font-weight: 600; }
+
+  /* OFFER COMPARISON STYLES */
+  .row3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .offer-input-card {
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+  .offer-result-card {
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .offer-result-card.good {
+    border-left: 5px solid var(--success);
+  }
+  .offer-result-card.warn {
+    border-left: 5px solid var(--warning);
+  }
+  .offer-result-card.bad {
+    border-left: 5px solid var(--danger);
+  }
+  .offer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  /* LISTS */
+  ul.clean-list {
+    list-style: none;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  ul.clean-list li {
+    font-size: 13.5px;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-page);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  ul.clean-list li::before {
+    content: "•";
+    color: var(--primary-blue);
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    aside.sidebar {
+      transform: translateX(-100%);
+    }
+    aside.sidebar.open {
+      transform: translateX(0);
+    }
+    main.main-content {
+      margin-left: 0;
+    }
+    .menu-toggle {
+      display: block;
+    }
+    .feature-grid {
+      grid-template-columns: 1fr;
+    }
+    .health-metrics-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .content-container {
+      padding: 20px 16px 60px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>LendWise</h1>
+      <span>Lending Copilot</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" id="nav">
+    <button data-id="s-dashboard" class="nav-item on">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      <span>Dashboard</span>
+    </button>
+    <button data-id="s2" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line>
+        <line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path>
+        <path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path>
+        <path d="M12 18h.01"></path><path d="M8 18h.01"></path>
+      </svg>
+      <span>Affordability</span>
+    </button>
+    <button data-id="s3" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path>
+      </svg>
+      <span>Compare Loans</span>
+    </button>
+    <button data-id="s4" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+      </svg>
+      <span>Stress Monitor</span>
+    </button>
+    <button data-id="s5" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      </svg>
+      <span>Privacy Ledger</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="privacy-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <div>
+        <b>Client-Side Privacy</b>
+        <div>0 raw transactions stored. Mathematical summaries only.</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <span class="status-pill not-connected" id="topbarStatusPill" onclick="show('s1')">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="10"></circle>
+        </svg>
+        <span id="topbarStatusText">Connect Statement</span>
+      </span>
+    </div>
+  </header>
+
+  <div class="content-container">
+
+    <!-- DASHBOARD SCREEN -->
+    <section id="s-dashboard" class="screen on">
+      <div class="dash-header">
+        <h1>Welcome to LendWise</h1>
+        <p>Your personal lending copilot</p>
+      </div>
+
+      <!-- BORROWING HEALTH SUMMARY CARD -->
+      <div class="health-card" id="healthCardEmpty">
+        <div class="empty-state">
+          <div class="empty-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <h3>No financial statement connected yet</h3>
+          <p>Upload your bank statement to view your safe EMI limit, maximum borrowing capacity, and risk indicators. Your statement is read in your browser and never uploaded.</p>
+          <button class="btn-primary" onclick="show('s1')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Connect Bank Statement</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="health-card" id="healthCardData" style="display: none;">
+        <div class="health-card-header">
+          <div>
+            <div class="badge-tag">Borrowing Health Summary</div>
+            <h3 style="font-size: 19px; margin-top: 4px;">Financial Capacity & Health Score</h3>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="status-pill connected" id="dashPersonaBadge">Statement Connected</span>
+            <button class="btn-link" onclick="show('s1')">Change Statement</button>
+          </div>
+        </div>
+
+        <div class="health-metrics-grid">
+          <div class="metric-box">
+            <span class="metric-label">Safe Monthly EMI</span>
+            <span class="metric-val blue" id="dashSafeEmi">Rs. 0</span>
+            <span class="metric-sub">Stress tested capacity</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Max Safe Loan</span>
+            <span class="metric-val" id="dashMaxLoan">Rs. 0</span>
+            <span class="metric-sub" id="dashLoanTenure">@ 14% for 36 months</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Emergency Buffer</span>
+            <span class="metric-val" id="dashBuffer">0 mos</span>
+            <span class="metric-sub">Target: 3.0+ months</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Cash Shortfall Risk</span>
+            <span class="metric-val" id="dashStressBand"><span class="status-pill badge-safe">Safe</span></span>
+            <span class="metric-sub" id="dashStressScore">Calculated from your statement</span>
+          </div>
+        </div>
+
+        <div class="health-card-footer">
+          <div id="dashStabilityInfo"></div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-secondary" onclick="show('s2')">View Affordability</button>
+            <button class="btn-primary" onclick="show('s3')">Compare Loans</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOUR FEATURE CARDS (MAX 2 COLUMNS) -->
+      <div class="section-title">Explore Copilot Tools</div>
+      <div class="feature-grid">
+        <!-- 1. Affordability -->
+        <div class="feature-card" onclick="show('s2')">
+          <div>
+            <div class="feature-top">
+              <div class="feature-icon blue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+                  <line x1="8" y1="6" x2="16" y2="6"></line>
+                  <line x1="16" y1="14" x2="16" y2="18"></line>
+                  <path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path>
+                </svg>
+              </div>
+              <div>
+                <h3>Affordability Calculator</h3>
+                <span class="muted">Safe limits & capacity</span>
+              </div>
+            </div>
+            <p>Determine how much EMI you can comfortably handle with real-time income shock tests and custom loan tenures.</p>
+          </div>
+          <div class="feature-cta">
+            <span>Calculate Safe EMI</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </div>
+
+        <!-- 2. Compare Loans -->
+        <div class="feature-card" onclick="show('s3')">
+          <div>
+            <div class="feature-top">
+              <div class="feature-icon purple">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path>
+                </svg>
+              </div>
+              <div>
+                <h3>Compare Loan Offers</h3>
+                <span class="muted">True APR & hidden fees</span>
+              </div>
+            </div>
+            <p>Uncover hidden processing fees, mandatory insurance charges, and effective annual borrowing rates across lenders.</p>
+          </div>
+          <div class="feature-cta">
+            <span>Compare True Costs</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </div>
+
+        <!-- 3. Stress Monitor -->
+        <div class="feature-card" onclick="show('s4')">
+          <div>
+            <div class="feature-top">
+              <div class="feature-icon orange">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+              </div>
+              <div>
+                <h3>Debt Stress Monitor</h3>
+                <span class="muted">Early warning indicators</span>
+              </div>
+            </div>
+            <p>Track your 0–100 financial stress score, detect rising EMI ratios, and view actionable tips to maintain loan health.</p>
+          </div>
+          <div class="feature-cta">
+            <span>Check Stress Index</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </div>
+
+        <!-- 4. Privacy Ledger -->
+        <div class="feature-card" onclick="show('s5')">
+          <div>
+            <div class="feature-top">
+              <div class="feature-icon green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3>Privacy Ledger</h3>
+                <span class="muted">Zero raw data storage</span>
+              </div>
+            </div>
+            <p>Inspect the 15 extracted summary numbers, verify that no raw transactions are stored, or delete all data instantly.</p>
+          </div>
+          <div class="feature-cta">
+            <span>View Privacy Ledger</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 1: CONNECT STATEMENT -->
+    <section id="s1" class="screen">
+      <div style="margin-bottom: 16px;">
+        <button class="btn-secondary" onclick="show('s-dashboard')" style="padding: 6px 14px; font-size: 13px;">
+          ← Back to Dashboard
+        </button>
+      </div>
+      <div class="card">
+        <h2>1. Upload your bank statement</h2>
+        <p class="desc">Choose how you'd like to provide your information. Your statement is processed inside your browser; only summary metrics are sent.</p>
+        <div style="margin:16px 0 8px;">
+          <label for="file">Upload your bank statement</label>
+          <input type="file" id="file" accept=".csv,.txt,.pdf,.png,.jpg,.jpeg,.webp,.bmp,image/*,application/pdf,text/plain,text/csv">
+          <p class="desc" style="margin-top:8px;">Accepted: CSV, text, PDF (text or scanned) and photos/screenshots (PNG, JPG). Files are read inside your browser and are never uploaded. It needs the date, description, amount (or debit/credit) and running balance. Nothing is shown below until a statement has been read.</p>
+          <p class="desc" id="readStatus" style="display:none; margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div class="card" id="readReport" style="display:none">
+        <h2>What was read from your file</h2>
+        <p class="desc" id="readSummary"></p>
+        <div style="overflow-x:auto;"><table id="readPreview" style="width:100%; font-size:12.5px;"></table></div>
+      </div>
+
+      <div class="card" id="featBox" style="display:none">
+        <h2>Review & edit your details</h2>
+        <p class="desc">Check these four amounts and correct them if needed. The other summary metrics are kept as calculated or estimated.</p>
+        <div class="financial-input-grid" style="margin-bottom:18px;">
+          <div><label for="editIncome">Monthly Income (₹)</label><input id="editIncome" type="number" min="0" step="0.01"></div>
+          <div><label for="editRent">Monthly Rent (₹)</label><input id="editRent" type="number" min="0" step="0.01"></div>
+          <div><label for="editEmi">Existing EMI (₹)</label><input id="editEmi" type="number" min="0" step="0.01"></div>
+          <div><label for="editSpending">Monthly Spending (₹)</label><input id="editSpending" type="number" min="0" step="0.01"></div>
+        </div>
+                <p class="desc"><span id="nfeat" style="font-weight:700;color:var(--primary-blue);"></span> summary metrics will be shared. No merchant names or individual transaction logs are sent.</p>
+        <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;"><label for="days">Keep my consent for</label><select id="days"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select></div>
+          <button id="allow" class="btn-primary" style="padding:12px 24px;">Confirm & Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: AFFORDABILITY -->
+    <section id="s2" class="screen">
+      <div class="card">
+        <div class="muted">Safe EMI for you</div>
+        <div class="big" id="safeEmi">-</div>
+        <div class="bar"><i id="safeBar" style="width:0"></i></div>
+        <div class="muted" style="margin-top: 6px;">Max loan capacity: <b id="maxLoan" style="color: var(--text-main); font-size: 15px;">-</b> <span id="loanNote"></span></div>
+      </div>
+
+      <div class="card">
+        <h2>Adjust Borrowing Parameters</h2>
+        <p class="desc">Test how interest rates, loan tenure, and potential income drops affect your safe borrowing buffer.</p>
+
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label for="rate">Interest rate</label>
+            <span style="font-size: 14px; font-weight: 700; color: var(--primary-blue);"><span id="rateV">14</span>% a year</span>
+          </div>
+          <input type="range" id="rate" min="8" max="30" step="0.5" value="14">
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label for="months">Tenure</label>
+            <span style="font-size: 14px; font-weight: 700; color: var(--primary-blue);"><span id="monthsV">36</span> months</span>
+          </div>
+          <input type="range" id="months" min="6" max="84" step="6" value="36">
+        </div>
+
+        <div style="margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label for="shock">What if income drops by</label>
+            <span style="font-size: 14px; font-weight: 700; color: var(--danger);"><span id="shockV">20</span>%</span>
+          </div>
+          <input type="range" id="shock" min="0" max="40" step="5" value="20">
+        </div>
+      </div>
+
+      <div class="card" id="afDetails"></div>
+    </section>
+
+    <!-- SCREEN 3: COMPARE LOANS -->
+    <section id="s3" class="screen">
+      <div class="card">
+        <h2>Compare offers</h2>
+        <p class="desc">Compare standard loan offers side by side to uncover their true APR after all upfront fees and insurance.</p>
+        
+        <div style="margin-bottom: 16px;">
+          <label for="principal">Desired Loan Amount (Rs.)</label>
+          <input type="number" id="principal" value="250000">
+        </div>
+
+        <div id="offerForms"></div>
+        
+        <button id="compareBtn" class="btn-primary" style="width: 100%; margin-top: 10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+          <span>Compare True Cost</span>
+        </button>
+      </div>
+
+      <div id="compareOut"></div>
+    </section>
+
+    <!-- SCREEN 4: STRESS MONITOR -->
+    <section id="s4" class="screen">
+      <div class="card">
+        <div class="muted">Chance of running out of cash in the next 12 months (calculated from your statement)</div>
+        <div style="display: flex; align-items: baseline; gap: 14px;">
+          <div class="big" id="stressScore">-</div>
+          <div id="stressBand"></div>
+        </div>
+        <div class="bar"><i id="stressBar" style="width:0; background: var(--warning);"></i></div>
+        <p class="muted" id="stressReason" style="margin-top:10px;"></p>
+        <table id="stressMetrics" style="width:100%; margin-top:12px; font-size:13.5px;"></table>
+        <p class="muted" id="stressMethod" style="margin-top:6px; font-size:12.5px;"></p>
+      </div>
+
+      <div class="card">
+        <h2>Key Risk Drivers</h2>
+        <p class="muted">What is causing the risk, measured from your statement (percentage points show how much risk each factor adds):</p>
+        <ul id="drivers" class="clean-list"></ul>
+
+        <h2 style="margin-top: 24px;">Recommended Next Steps</h2>
+        <p class="muted">Sized by re-running the simulation until the risk is back within the limit:</p>
+        <ul id="actions" class="clean-list"></ul>
+      </div>
+    </section>
+
+    <!-- SCREEN 5: PRIVACY LEDGER -->
+    <section id="s5" class="screen">
+      <div class="card">
+        <h2>Privacy ledger</h2>
+        <p class="desc">A transparent log of the exact data shared with the server. Your raw bank transactions never left your machine.</p>
+        
+        <div class="health-metrics-grid" style="margin-bottom: 20px;">
+          <div class="metric-box">
+            <span class="metric-label">Numbers Shared</span>
+            <span class="metric-val" id="lNums">0</span>
+            <span class="metric-sub">Aggregates only</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Transactions Stored</span>
+            <span class="metric-val" id="lTx" style="color: var(--success);">0</span>
+            <span class="metric-sub">Zero storage guarantee</span>
+          </div>
+          <div class="metric-box" style="grid-column: span 2;">
+            <span class="metric-label">Consent Expiration</span>
+            <span class="metric-val" id="lExp" style="font-size: 18px;">-</span>
+            <span class="metric-sub">Automatically expires</span>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 8px;">Active Features on Server</h3>
+        <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 4px 14px; margin-bottom: 20px;">
+          <table id="lFeat"></table>
+        </div>
+
+        <div style="padding-top: 14px; border-top: 1px solid var(--border);">
+          <button id="delBtn" class="btn-danger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+              <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Delete everything and revoke consent</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+const session = Math.random().toString(36).slice(2);
+let features = null;
+const $ = id => document.getElementById(id);
+const money = n => "Rs. " + Math.round(n).toLocaleString("en-IN");
+const post = (url, body) => fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}).then(r => r.json());
+
+// ---- navigation titles ----
+const titleMap = {
+  "s-dashboard": "Dashboard",
+  "s1": "Connect Statement",
+  "s2": "Affordability Calculator",
+  "s3": "Compare Loan Offers",
+  "s4": "Debt Stress Monitor",
+  "s5": "Privacy Ledger"
+};
+
+function show(id) {
+  if (id !== "s-dashboard" && id !== "s1" && !features) {
+    alert("Please upload a bank statement first.");
+    show("s1");
+    return;
+  }
+  
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id));
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("on", b.dataset.id === id));
+  
+  if ($("pageTitle")) $("pageTitle").textContent = titleMap[id] || "LendWise";
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Mobile menu auto close
+  if ($("sidebar").classList.contains("open")) {
+    $("sidebar").classList.remove("open");
+  }
+
+  if (id === "s-dashboard") updateDashboard();
+  if (id === "s2") loadAfford();
+  if (id === "s4") loadStress();
+  if (id === "s5") loadLedger();
+}
+
+$("nav").onclick = e => {
+  const btn = e.target.closest("button[data-id]");
+  if (btn) show(btn.dataset.id);
+};
+
+$("menuToggle").onclick = () => {
+  $("sidebar").classList.toggle("open");
+};
+
+// ---- Dashboard Health Card Updater ----
+async function updateDashboard() {
+  if (!features) {
+    $("healthCardEmpty").style.display = "block";
+    $("healthCardData").style.display = "none";
+    $("topbarStatusPill").className = "status-pill not-connected";
+    $("topbarStatusText").textContent = "Connect Statement";
+    return;
+  }
+
+  $("healthCardEmpty").style.display = "none";
+  $("healthCardData").style.display = "block";
+  $("topbarStatusPill").className = "status-pill connected";
+  $("topbarStatusText").textContent = "Statement Connected";
+
+  try {
+    const a = await post("/affordability", {features, annual_rate: 0.14, months: 36});
+    const s = await post("/stress", {features});
+
+    $("dashSafeEmi").textContent = money(a.safe_emi) + " / mo";
+    $("dashMaxLoan").textContent = money(a.max_loan);
+    $("dashBuffer").textContent = a.buffer_months + " mos";
+    
+    const bandClass = s.band === "Safe" ? "badge-safe" : s.band === "Watch" || s.band === "Insufficient data" ? "badge-watch" : "badge-danger";
+    $("dashStressBand").innerHTML = `<span class="status-pill ${bandClass}">${s.band}</span>`;
+    $("dashStressScore").textContent = `${s.score.toFixed(1)}% chance of a cash shortfall in 12 months`;
+
+    const stabilityClass = a.income_stability === "High" ? "badge-safe" : a.income_stability === "Medium" ? "badge-watch" : "badge-danger";
+    $("dashStabilityInfo").innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; color:var(--text-secondary);">
+        <span>Stability: <b class="status-pill ${stabilityClass}" style="padding:2px 8px; font-size:11.5px;">${a.income_stability}</b></span>
+        <span>•</span>
+        <span>Income Shock Test: <b style="color: ${a.stress_test_pass ? 'var(--success)' : 'var(--danger)'};">${a.stress_test_pass ? "Passed" : "Failed"} (${Math.round(a.assumptions.income_shock*100)}% drop, from your income pattern)</b></span>
+      </div>
+    `;
+
+    $("dashPersonaBadge").textContent = "Statement Connected";
+  } catch (err) {
+    console.error("Dashboard update failed:", err);
+  }
+}
+
+// ---- screen 1: CSV upload ----
+function showReview() {
+  if (!features) return;
+  $("editIncome").value = Math.round(features.median_income || 0);
+  $("editRent").value = Math.round(features.fixed_other || 0);
+  $("editEmi").value = Math.round(features.existing_emi || 0);
+  $("editSpending").value = Math.round(features.essentials || 0);
+  $("nfeat").textContent = Object.keys(features).length;
+  $("featBox").style.display = "block";
+}
+
+function useNormalized(rows, stats) {
+  features = extractFeatures(rows);
+  showReport(rows, stats);
+  showReview();
+}
+
+function useRows(rawRows) {
+  const { rows, skipped } = normalizeRows(rawRows);
+  useNormalized(rows, { rows_read: rows.length, skipped, reconciled_pct: null, first_date: rows[0].date, last_date: rows[rows.length - 1].date });
+}
+
+function showReport(rows, stats) {
+  const warn = [];
+  if (stats.reconciled_pct !== null && stats.reconciled_pct < 98)
+    warn.push(`Only ${stats.reconciled_pct}% of rows agree with your running balance, so some numbers may have been misread. Check the preview and, if wrong, upload a CSV or a clearer file.`);
+  if (stats.skipped > 0) warn.push(`${stats.skipped} line(s) could not be used.`);
+  if (rows.length < 10) warn.push("Very few transactions were found; results will be rough.");
+  $("readSummary").innerHTML = `Read <b>${rows.length}</b> transactions from <b>${stats.first_date}</b> to <b>${stats.last_date}</b>` +
+    (stats.reconciled_pct !== null ? `; <b>${stats.reconciled_pct}%</b> of amounts agree with the running balance.` : ".") +
+    (warn.length ? `<br><span style="color:var(--danger)">${warn.join(" ")}</span>` : "");
+  const head = "<tr><th align='left'>Date</th><th align='left'>Description</th><th align='right'>Amount</th><th align='right'>Balance</th></tr>";
+  const esc = t => String(t).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  $("readPreview").innerHTML = head + rows.slice(0, 8).map(r => `<tr><td>${r.date}</td><td>${esc(r.description).slice(0, 48)}</td><td align="right">${r.amount.toLocaleString("en-IN")}</td><td align="right">${r.balance.toLocaleString("en-IN")}</td></tr>`).join("") +
+    (rows.length > 8 ? `<tr><td colspan="4" class="muted">... and ${rows.length - 8} more rows</td></tr>` : "");
+  $("readReport").style.display = "block";
+}
+
+// ---- PDF / image / text readers (all run in the browser) ----
+const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+const TESSERACT = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+const loaded = {};
+function loadScript(url) {
+  return loaded[url] || (loaded[url] = new Promise((res, rej) => {
+    const el = document.createElement("script");
+    el.src = url; el.onload = res; el.onerror = () => { delete loaded[url]; rej(new Error("Could not load a reading component (check your internet connection).")); };
+    document.head.appendChild(el);
+  }));
+}
+const setStatus = msg => { const el = $("readStatus"); el.style.display = msg ? "block" : "none"; el.textContent = msg || ""; };
+
+async function ocr(imageSource, label) {
+  await loadScript(TESSERACT);
+  const worker = await Tesseract.createWorker("eng", 1, { logger: m => { if (m.status === "recognizing text") setStatus(`${label}: reading text ${Math.round(m.progress * 100)}%`); } });
+  try {
+    await worker.setParameters({ preserve_interword_spaces: "1" });
+    return (await worker.recognize(imageSource)).data.text;
+  } finally { await worker.terminate(); }
+}
+
+async function pdfToText(file) {
+  await loadScript(PDFJS);
+  const workerCode = await (await fetch(PDFJS_WORKER)).text();
+  pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([workerCode], { type: "text/javascript" }));
+  const task = pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  task.onPassword = (cb, reason) => {
+    const pw = prompt(reason === 2 ? "Wrong password. Enter the PDF password again:" : "This PDF is password protected. Enter the password (it stays in your browser):");
+    if (pw) cb(pw); else task.destroy();
+  };
+  const pdf = await task.promise, out = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    setStatus(`Reading PDF page ${i} of ${pdf.numPages}...`);
+    const page = await pdf.getPage(i);
+    const lines = itemsToLines((await page.getTextContent()).items);
+    if (lines.join("").replace(/\s/g, "").length > 40) { out.push(lines.join("\n")); continue; }
+    const viewport = page.getViewport({ scale: 2.5 }), canvas = document.createElement("canvas");   // scanned page: no text layer, so OCR it
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    out.push(await ocr(canvas, `Scanned page ${i} of ${pdf.numPages}`));
+  }
+  return out.join("\n");
+}
+
+function csvFromText(text) {                       // a .txt that is really a CSV
+  const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+  try { return normalizeRows(parsed.data); } catch (e) { return null; }
+}
+
+async function readStatementFile(file) {
+  const name = file.name.toLowerCase(), type = file.type || "";
+  features = null; $("featBox").style.display = "none"; $("readReport").style.display = "none";
+  try {
+    if (name.endsWith(".csv") || type === "text/csv") {
+      setStatus("Reading CSV...");
+      await new Promise((res, rej) => Papa.parse(file, { header: true, skipEmptyLines: true, complete: r => { try { useRows(r.data); res(); } catch (e) { rej(e); } }, error: rej }));
+    } else if (name.endsWith(".txt") || type === "text/plain") {
+      setStatus("Reading text file...");
+      const text = await file.text(), asCsv = csvFromText(text);
+      if (asCsv) useNormalized(asCsv.rows, { rows_read: asCsv.rows.length, skipped: asCsv.skipped, reconciled_pct: null, first_date: asCsv.rows[0].date, last_date: asCsv.rows[asCsv.rows.length - 1].date });
+      else { const r = parseStatementText(text); if (r.rows.length < 2) throw new Error("Could not find transaction lines (date, amount, balance) in this text."); useNormalized(r.rows, r.stats); }
+    } else if (name.endsWith(".pdf") || type === "application/pdf") {
+      const text = await pdfToText(file);
+      setStatus("Analysing statement text...");
+      const r = parseStatementText(text);
+      if (r.rows.length < 2) throw new Error("Could not find transaction lines (date, amount, balance) in this PDF. Try a CSV or a clearer file.");
+      useNormalized(r.rows, r.stats);
+    } else if (type.startsWith("image/") || /\.(png|jpe?g|webp|bmp)$/.test(name)) {
+      const text = await ocr(file, "Image");
+      setStatus("Analysing statement text...");
+      const r = parseStatementText(text);
+      if (r.rows.length < 2) throw new Error("Could not find transaction lines in this image. Use a sharp, straight, full-width photo or screenshot, or upload a PDF/CSV.");
+      useNormalized(r.rows, r.stats);
+    } else {
+      throw new Error("Unsupported file type. Please upload a CSV, text, PDF or image file.");
+    }
+    setStatus("");
+  } catch (err) {
+    console.error("Statement processing error:", err);
+    features = null; $("featBox").style.display = "none"; $("readReport").style.display = "none";
+    setStatus("");
+    alert("Could not read this statement: " + (err && err.message ? err.message : "unknown error"));
+  }
+}
+
+$("file").onchange = e => { if (e.target.files && e.target.files[0]) readStatementFile(e.target.files[0]); };
+
+$("allow").onclick = async () => {
+  if (!features) { alert("Please upload a bank statement first."); return; }
+  const values = ["editIncome", "editRent", "editEmi", "editSpending"].map(id => $(id).value.trim());
+  const nums = values.map(Number);
+  if (values.some(v => v === "") || nums.some(v => !Number.isFinite(v) || v < 0)) {
+    alert("Please check that all four amounts are valid non-negative numbers."); return;
+  }
+  // Update only the corresponding existing feature fields; keep all other extracted features.
+  // keep the statement's own income pattern: scale the cautious (25th percentile) income with any correction
+  if (features.median_income > 0) features.p25_income = features.p25_income * nums[0] / features.median_income;
+  else features.p25_income = nums[0];
+  features.median_income = nums[0];
+  features.fixed_other = nums[1];
+  features.existing_emi = nums[2];
+  features.essentials = nums[3];
+  try {
+    const result = await post("/consent", {session, features, days:+$("days").value});
+    if (!result || result.ok !== true) throw new Error(result?.detail || "Could not save consent");
+    show("s-dashboard");
+  } catch (err) {
+    console.error("Consent failed:", err);
+    alert("Could not continue: " + (err && err.message ? err.message : "Unknown error") + "\nOpen the browser console for details.");
+  }
+};
+
+// ---- screen 2: affordability ----
+async function loadAfford() {
+  const rate = +$("rate").value, months = +$("months").value, shock = +$("shock").value;
+  $("rateV").textContent = rate; $("monthsV").textContent = months; $("shockV").textContent = shock;
+  try {
+    const a = await post("/affordability", {features, annual_rate: rate/100, months, income_shock: shock/100});
+    $("safeEmi").textContent = money(a.safe_emi) + " / month";
+    $("maxLoan").textContent = money(a.max_loan);
+    $("loanNote").textContent = `(${rate}%, ${months} months)`;
+    $("safeBar").style.width = Math.min(100, a.safe_emi / Math.max(1, a.foir_cap_emi) * 100) + "%";
+    
+    const stabClass = a.income_stability === "High" ? "badge-safe" : a.income_stability === "Medium" ? "badge-watch" : "badge-danger";
+    const passClass = a.stress_test_pass ? "badge-safe" : "badge-danger";
+
+    $("afDetails").innerHTML = `<h2>Affordability Breakdown</h2><p class="desc">Conservative assumptions calculated from your bank data:</p><table>
+      <tr><td>Conservative monthly income</td><td align="right">${money(a.inputs.conservative_income)}</td></tr>
+      <tr><td>Fixed obligations (EMIs, rent, bills)</td><td align="right">${money(a.inputs.fixed_obligations)}</td></tr>
+      <tr><td>Everyday essentials</td><td align="right">${money(a.inputs.essentials)}</td></tr>
+      <tr><td>Income stability</td><td align="right"><span class="status-pill ${stabClass}">${a.income_stability}</span></td></tr>
+      <tr><td>Emergency buffer</td><td align="right">${a.buffer_months} months (goal: 3.0)</td></tr>
+      <tr><td>Passes income-drop test?</td><td align="right"><span class="status-pill ${passClass}">${a.stress_test_pass ? "Yes" : "No"}</span></td></tr></table>`;
+  } catch (err) {
+    console.error("Affordability load failed:", err);
+  }
+}
+["rate","months","shock"].forEach(id => $(id).oninput = loadAfford);
+
+// ---- screen 3: compare ----
+const defaults = [["Lender A",12,36,2500,0],["Lender B",10.5,36,8000,6000],["Lender C",13,20,1000,0]];
+$("offerForms").innerHTML = defaults.map((d,i) => `<div class="offer-input-card"><b>Offer ${i+1}</b><div class="row3">
+  <div><label>Name</label><input id="n${i}" value="${d[0]}"></div><div><label>Rate % / yr</label><input id="r${i}" type="number" step="0.1" value="${d[1]}"></div>
+  <div><label>Months</label><input id="m${i}" type="number" value="${d[2]}"></div><div><label>Processing fee</label><input id="f${i}" type="number" value="${d[3]}"></div>
+  <div><label>Insurance</label><input id="i${i}" type="number" value="${d[4]}"></div></div></div>`).join("");
+
+$("compareBtn").onclick = async () => {
+  const pVal = +$("principal").value;
+  if (!pVal || pVal <= 0) {
+    alert("Please enter a valid loan amount greater than zero.");
+    return;
+  }
+  const offers = defaults.map((_,i) => ({
+    name: $("n"+i).value.trim() || ("Lender " + (i+1)),
+    principal: pVal,
+    annual_rate: Math.max(0.001, +$("r"+i).value || 12) / 100,
+    months: Math.max(1, Math.round(+$("m"+i).value || 36)),
+    processing_fee: Math.max(0, +$("f"+i).value || 0),
+    insurance: Math.max(0, +$("i"+i).value || 0)
+  }));
+  try {
+    const out = await post("/compare", {features, offers});
+    $("compareOut").innerHTML = `<div class="card" style="background: rgba(79, 70, 229, 0.05); border: 1px solid rgba(79, 70, 229, 0.2);"><b style="color: var(--primary-blue); font-size: 15px; display: block; margin-bottom: 6px;">${out.explanation}</b><div class="muted">Your safe EMI: <b style="color: var(--text-main);">${money(out.safe_emi)}</b></div></div>` +
+      out.results.map(r => `<div class="offer-result-card ${r.best_fit ? "good" : r.fits_limit ? "warn" : "bad"}">
+        <div class="offer-header">
+          <b>${r.name}</b>
+          <span class="status-pill ${r.best_fit ? "badge-safe" : r.fits_limit ? "badge-watch" : "badge-danger"}">${r.best_fit ? "Best fit" : r.fits_limit ? "Within safe limit" : "Over safe EMI"}</span>
+        </div>
+        <table><tr><td>Advertised rate</td><td align="right">${(r.nominal_rate*100).toFixed(1)}%</td></tr>
+        <tr><td>True yearly cost (APR)</td><td align="right"><b style="color: var(--primary-blue); font-size: 15px;">${(r.effective_apr*100).toFixed(1)}%</b></td></tr>
+        <tr><td>Monthly EMI</td><td align="right"><b>${money(r.emi)}</b></td></tr>
+        <tr><td>Upfront fees</td><td align="right">${money(r.upfront_fees)}</td></tr>
+        <tr><td>Total you pay back</td><td align="right">${money(r.total_payable)}</td></tr>
+        <tr><td>Total cost (interest + fees)</td><td align="right">${money(r.total_cost)}</td></tr></table></div>`).join("");
+  } catch (err) {
+    console.error("Comparison failed:", err);
+    alert("Failed to compare loan offers. Please verify offer terms.");
+  }
+};
+
+// ---- screen 4: stress ----
+async function loadStress() {
+  try {
+    const s = await post("/stress", {features});
+    if (s.detail) throw new Error(typeof s.detail === "string" ? s.detail : JSON.stringify(s.detail));
+    const shown = s.score > 0 && s.score < 0.1 ? "<0.1%" : s.score.toFixed(1) + "%";
+    $("stressScore").textContent = shown;
+    const bandClass = s.band === "Safe" ? "badge-safe" : (s.band === "Watch" || s.band === "Insufficient data") ? "badge-watch" : "badge-danger";
+    const barColor = s.band === "Safe" ? "var(--success)" : s.band === "Watch" ? "var(--warning)" : "var(--danger)";
+    $("stressBand").innerHTML = `<span class="status-pill ${bandClass}">${s.band}</span>`;
+    $("stressBar").style.width = Math.max(1, Math.min(100, s.score)) + "%";
+    $("stressBar").style.background = barColor;
+    $("stressReason").textContent = s.score === 0 && s.band === "Safe"
+      ? `None of ${s.simulation.futures.toLocaleString("en-IN")} simulated years ran out of cash, so the chance is below ${(100 / s.simulation.futures).toFixed(3)}%. The figures below show how much room you have.`
+      : s.band_reason;
+    const m = s.metrics || {}, pct = v => v === null || v === undefined ? "n/a" : v + "%";
+    const rows = [
+      ["Typical monthly income", money(m.monthly_income_typical || 0)],
+      ["Monthly outgo (EMIs + rent/bills + spending)", money(m.monthly_outgo || 0)],
+      ["Monthly surplus / (gap)", money(m.monthly_surplus || 0)],
+      ["Outgo as share of income", pct(m.outgo_share_of_income_pct)],
+      ["EMIs as share of income", pct(m.emi_share_of_income_pct)],
+      ["Surplus in a bad income month", money(m.bad_month_surplus || 0)],
+      ["Cash cushion (months of outgo)", m.months_of_outgo_in_cash === null || m.months_of_outgo_in_cash === undefined ? "n/a" : m.months_of_outgo_in_cash + " months"],
+      ["Lowest usable cash in a bad year (1 in 20)", money(m.lowest_cash_in_bad_year || 0)],
+      ["Months of statement read", m.months_in_statement],
+    ];
+    $("stressMetrics").innerHTML = s.band === "Insufficient data" ? "" : rows.map(r => `<tr><td>${r[0]}</td><td align="right"><b>${r[1]}</b></td></tr>`).join("");
+    const dq = s.data_quality, sim = s.simulation;
+    $("stressMethod").textContent = `Based on ${sim.futures.toLocaleString("en-IN")} simulated years using your own income pattern (margin of error about ±${sim.margin_of_error_pp} points). Data confidence: ${dq.confidence}.` + (dq.warnings.length ? " " + dq.warnings.join(" ") : "");
+    $("drivers").innerHTML = s.drivers.length ? s.drivers.map(d => `<li>${d}</li>`).join("") : "<li>No adverse factor found in your statement.</li>";
+    $("actions").innerHTML = s.actions.map(a => `<li>${a}</li>`).join("");
+  } catch (err) {
+    console.error("Stress load failed:", err);
+    $("stressScore").textContent = "-";
+    $("stressReason").textContent = "Could not calculate the risk: " + (err && err.message ? err.message : "unknown error");
+  }
+}
+
+// ---- screen 5: privacy ledger ----
+async function loadLedger() {
+  try {
+    const l = await (await fetch("/ledger/" + session)).json();
+    $("lNums").textContent = l.numbers_shared;
+    $("lTx").textContent = l.transactions_stored;
+    $("lExp").textContent = l.expires_at ? new Date(l.expires_at*1000).toLocaleDateString() : "-";
+    const entries = Object.entries(l.features || {});
+    if (entries.length > 0) {
+      $("lFeat").innerHTML = entries.map(([k,v]) => `<tr><td>${k.replaceAll("_"," ")}</td><td align="right">${v}</td></tr>`).join("");
+    } else {
+      $("lFeat").innerHTML = `<tr><td colspan="2" class="muted" style="text-align:center; padding:12px;">No active features stored on server.</td></tr>`;
+    }
+  } catch (err) {
+    console.error("Ledger fetch failed:", err);
+  }
+}
+$("delBtn").onclick = async () => {
+  await fetch("/me/" + session, {method:"DELETE"});
+  features = null;
+  alert("All shared data deleted from server.");
+  location.reload();
+};
+
+// Initial state: show dashboard
+show("s-dashboard");
+</script>
+</body>
+</html>

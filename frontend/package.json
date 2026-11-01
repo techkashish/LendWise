@@ -1,0 +1,23 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "features.js",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "object-assign": "^4.1.1",
+    "vary": "^1.1.2"
+  },
+  "devDependencies": {
+    "vite": "^8.3.5"
+  },
+  "scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview"
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
